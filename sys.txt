@@ -1,0 +1,1300 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+60 Add
+160 Matrix
+230 Zombie
+320 Producer Consumer
+450 Reader Writer
+530 FCFS
+580 SJF Prem
+640 SJF Non
+700 Priority Prem
+800 Priority Non
+900 Round Robin
+1000 Banker's
+1100 Page fault
+1200 Disk
+
+#!/bin/bash
+ADDRESS_BOOK="address_book.txt"
+add_entry() {
+    echo "Enter Name:"
+    read name
+    echo "Enter Email:"
+    read email
+    echo "Enter Mobile Number:"
+    read mobile
+    echo "Enter Address:"
+    read address
+    echo "Enter Other Important Fields (separated by commas):"
+    read other_fields
+    echo "$name,$email,$mobile,$address,$other_fields" >> "$ADDRESS_BOOK"
+    echo "Entry added successfully!"}
+display_entries() {
+    if [ ! -s "$ADDRESS_BOOK" ]; then
+        echo "Address book is empty."
+    else
+        cat "$ADDRESS_BOOK"
+    fi}
+search_entries() {
+    echo "Enter the name to search:"
+    read name
+    grep -i "$name" "$ADDRESS_BOOK"}
+update_entry() {
+    echo "Enter the name of the entry to update:"
+    read name
+    entry=$(grep -i "$name" "$ADDRESS_BOOK")
+    if [ -z "$entry" ]; then
+        echo "No entry found with that name."
+        return
+    fi
+    echo "Current entry: $entry"
+    echo "Enter new Email:"
+    read email
+    echo "Enter new Mobile Number:"
+    read mobile
+    echo "Enter new Address:"
+    read address
+    echo "Enter new Other Important Fields (separated by commas):"
+    read other_fields
+    sed -i.bak "/$name/d" "$ADDRESS_BOOK"
+    echo "$name,$email,$mobile,$address,$other_fields" >> "$ADDRESS_BOOK"
+    echo "Entry updated successfully!"}
+delete_entry() {
+    echo "Enter the name of the entry to delete:"
+    read name
+    grep -i "$name" "$ADDRESS_BOOK"
+    if [ $? -eq 0 ]; then
+        sed -i.bak "/$name/d" "$ADDRESS_BOOK"
+        echo "Entry deleted successfully!"
+    else
+        echo "No entry found with that name."
+    fi}
+while true; do
+    echo "Address Book Menu"
+    echo "1. Add Entry"
+    echo "2. Display All Entries"
+    echo "3. Search Entry"
+    echo "4. Update Entry"
+    echo "5. Delete Entry"
+    echo "6. Exit"
+    echo "Enter your choice:"
+    read choice
+    case $choice in
+        1) add_entry ;;
+        2) display_entries ;;
+        3) search_entries ;;
+        4) update_entry ;;
+        5) delete_entry ;;
+        6) exit ;;
+        *) echo "Invalid choice. Please enter a number between 1 and 6." ;;
+    esac
+done 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MATRIX
+
+#include <bits/stdc++.h>
+#include <pthread.h>
+using namespace std;
+#define MAX 3 // Define the maximum dimension of the matrices as 3 (3x3 matrices).
+#define MAX_THREAD 4 // Define the number of threads as 4.
+int matA[MAX][MAX];
+int matB[MAX][MAX];
+int matC[MAX][MAX];
+int step_i = 0; // A shared variable to keep track of the current row being processed by threads.
+// Function to perform matrix multiplication for a specific row, executed by threads.
+void* mul(void* arg) {
+    int i = step_i++; // Increment the shared variable to assign a row to the current thread.
+    for (int j = 0; j < MAX; j++) { // Iterate over the columns of Matrix B.
+        for (int k = 0; k < MAX; k++) { // Iterate over the columns of Matrix A (or rows of Matrix B).
+            matC[i][j] += matA[i][k] * matB[k][j]; // Calculate the dot product for row `i` of A and column `j` of B.
+        }    }    return nullptr; // Return null since the function's return type is void*.}
+int main() {    cout << "Enter the values for Matrix A: " << endl;
+    for (int i = 0; i < MAX; i++) { // Input elements for Matrix A row by row.
+        for (int j = 0; j < MAX; j++) {
+            cin >> matA[i][j]; // Store input into matA.        }    }
+    cout << "Enter the values for Matrix B: " << endl;
+    for (int i = 0; i < MAX; i++) { // Input elements for Matrix B row by row.
+        for (int j = 0; j < MAX; j++) {
+            cin >> matB[i][j]; // Store input into matB.} }
+    // Declare threads to perform parallel processing.
+    pthread_t threads[MAX_THREAD];
+    // Create `MAX_THREAD` threads to compute parts of the matrix multiplication.
+    for (int i = 0; i < MAX_THREAD; i++) {
+        pthread_create(&threads[i], NULL, mul, nullptr); // Create a thread to execute the `mul` function.
+    }    // Wait for all threads to complete execution.
+    for (int i = 0; i < MAX_THREAD; i++) {
+        pthread_join(threads[i], NULL); // Block the main thread until thread `i` completes.    }
+    cout << "Final values for Matrix C: " << endl;
+    for (int i = 0; i < MAX; i++) {
+        for (int j = 0; j < MAX; j++) {
+            cout << matC[i][j] << " "; // Print each element in Matrix C.}
+        cout << endl; // Move to the next row.}
+    return 0; // Exit the program.}
+// sudo apt install g++
+// g++ Matrix_multiplication.cpp
+// ./a.out
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ZOMBIE ORPHAN
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/wait.h>
+void bubbleSort(int arr[], int n); // Prototype for Bubble Sort
+void insertionSort(int arr[], int n); // Prototype for Insertion Sort
+int main() {
+    int n; // Number of elements in the array
+    printf("Enter the number of elements: ");
+    scanf("%d", &n); // Input the number of elements
+    int arr[n]; // Declare an array of size `n`
+    printf("Enter %d integers:\n", n); // Prompt user for array elements
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &arr[i]); // Input array elements}
+    pid_t pid = fork(); // Create a child process
+    if (pid < 0) { // Check if fork() failed
+        perror("Fork failed"); // Print error if fork fails
+        exit(1); // Exit program
+    } else if (pid == 0) { // Code executed by child process
+        printf("\nChild process (PID: %d) is sorting the array using insertion sort.\n", getpid());
+        insertionSort(arr, n); // Sort the array using insertion sort
+        printf("Child process sorted array: ");
+        for (int i = 0; i < n; i++) {
+            printf("%d ", arr[i]); // Print sorted array
+        }        printf("\nChild process exiting.\n");
+        exit(0); // Child process exits
+    } else { // Code executed by parent process
+        sleep(2); // Parent process sleeps for 2 seconds (child becomes zombie)
+        printf("\nParent process (PID: %d) is sorting the array using bubble sort.\n", getpid());
+        bubbleSort(arr, n); // Sort the array using bubble sort
+        printf("Parent process sorted array: ");
+        for (int i = 0; i < n; i++) {
+            printf("%d ", arr[i]); // Print sorted array
+        }   printf("\n");
+        int status; 
+        wait(&status); // Parent waits for child process to finish, removing zombie state
+        printf("\nParent process detected child process termination.\n");
+        if (fork() == 0) { // Create a second child process
+            printf("\nOrphan child process (PID: %d), parent PID: %d\n", getpid(), getppid());
+            sleep(5); // Simulate orphan process execution
+            printf("Orphan child process (PID: %d) now adopted by init (PID: %d)\n", getpid(), getppid());
+            exit(0); // Orphan process exits
+        }        printf("Parent process exiting.\n");
+        exit(0); // Parent exits, orphaning the second child process
+    }    return 0;}
+void bubbleSort(int arr[], int n) {
+    for (int i = 0; i < n-1; i++) { // Outer loop for passes
+        for (int j = 0; j < n-i-1; j++) { // Inner loop for comparisons
+            if (arr[j] > arr[j+1]) { // Compare adjacent elements
+                int temp = arr[j]; // Swap elements if needed
+                arr[j] = arr[j+1];
+                arr[j+1] = temp;}}}}
+void insertionSort(int arr[], int n) {
+    for (int i = 1; i < n; i++) { // Iterate through unsorted elements
+        int key = arr[i]; // Current element to insert
+        int j = i - 1;
+        while (j >= 0 && arr[j] > key) { // Move elements greater than key
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }        arr[j + 1] = key; // Insert the key    }}
+// sudo apt update
+// sudo apt install gcc
+// gcc Zombie_Orphan.c -o Zombie_Orphan
+// ./Zombie_Orphan
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PRODUCER CONSUMER
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+
+// Shared buffer for producer-consumer communication
+int *buffer;  
+int buffer_size, in = 0, out = 0; // Buffer size and indices for circular buffer
+int item_count; // Number of items to produce/consume
+// Semaphores and mutex for synchronization
+sem_t empty; // Counts the number of empty slots in the buffer
+sem_t full;  // Counts the number of filled slots in the buffer
+pthread_mutex_t mutex; // Mutex to protect buffer access
+// Function to produce an item (returns a random integer)
+int produce_item() {
+    return rand() % 100;  }
+// Function to consume an item (prints the consumed item)
+void consume_item(int item) {
+    printf("Consumed: %d\n", item);}
+// Producer thread function
+void* producer(void* arg) {
+    int id = *((int *)arg); // Producer ID
+    int item;
+    // Each producer produces `item_count` items
+    for (int i = 0; i < item_count; i++) {
+        item = produce_item(); // Generate a new item
+        sem_wait(&empty); // Wait if the buffer is full
+        pthread_mutex_lock(&mutex); // Lock the buffer for exclusive access
+        // Add the item to the buffer and update the `in` index
+        buffer[in] = item;
+        printf("Producer %d produced: %d\n", id, item);
+        in = (in + 1) % buffer_size; // Use modulo for circular buffer
+        pthread_mutex_unlock(&mutex); // Unlock the buffer
+        sem_post(&full); // Signal that a new item is available
+        sleep(1); // Simulate production time   
+ }    return NULL;}
+// Consumer thread function
+void* consumer(void* arg) {
+    int id = *((int *)arg); // Consumer ID
+    int item;
+    // Each consumer consumes `item_count` items
+    for (int i = 0; i < item_count; i++) {
+        sem_wait(&full); // Wait if the buffer is empty
+        pthread_mutex_lock(&mutex); // Lock the buffer for exclusive access
+        // Remove an item from the buffer and update the `out` index
+        item = buffer[out];
+        printf("Consumer %d consumed: %d\n", id, item);
+        out = (out + 1) % buffer_size; // Use modulo for circular buffer
+        pthread_mutex_unlock(&mutex); // Unlock the buffer
+        sem_post(&empty); // Signal that a slot is now empty
+        sleep(1); // Simulate consumption time
+    }    return NULL;}
+int main() {
+    int producers_count, consumers_count;
+    // Get buffer size, number of producers, number of consumers, and item count from the user
+    printf("Enter the buffer size: ");
+    scanf("%d", &buffer_size);
+    printf("Enter the number of producers: ");
+    scanf("%d", &producers_count);
+    printf("Enter the number of consumers: ");
+    scanf("%d", &consumers_count);
+    printf("Enter the number of items to produce/consume: ");
+    scanf("%d", &item_count);
+    // Allocate memory for the buffer
+    buffer = (int *)malloc(buffer_size * sizeof(int));
+    // Initialize semaphores and mutex
+    sem_init(&empty, 0, buffer_size);  // Initially, all slots are empty
+    sem_init(&full, 0, 0);             // Initially, no slots are full
+    pthread_mutex_init(&mutex, NULL); // Initialize the mutex
+    // Create producer and consumer threads
+    pthread_t producers[producers_count], consumers[consumers_count];
+    int producer_ids[producers_count], consumer_ids[consumers_count];
+    // Create producer threads
+    for (int i = 0; i < producers_count; i++) {
+        producer_ids[i] = i + 1; // Assign a unique ID to each producer
+        pthread_create(&producers[i], NULL, producer, (void *)&producer_ids[i]);
+    }    // Create consumer threads
+    for (int i = 0; i < consumers_count; i++) {
+        consumer_ids[i] = i + 1; // Assign a unique ID to each consumer
+        pthread_create(&consumers[i], NULL, consumer, (void *)&consumer_ids[i]);}
+    // Wait for all producer threads to complete
+    for (int i = 0; i < producers_count; i++) {
+        pthread_join(producers[i], NULL);    }
+    // Wait for all consumer threads to complete
+    for (int i = 0; i < consumers_count; i++) {
+        pthread_join(consumers[i], NULL);
+    }    // Destroy semaphores and mutex
+    sem_destroy(&empty);
+    sem_destroy(&full);
+    pthread_mutex_destroy(&mutex);
+    // Free allocated memory for the buffer
+    free(buffer);
+    return 0;}
+// sudo apt update
+// sudo apt install gcc
+// gcc Producer_Consumer.c -o Producer_Consumer
+// ./Producer_Consumer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+READER WRITER
+
+#include <iostream>
+#include <pthread.h>  // Header for POSIX threads (for multithreading).
+#include <semaphore.h> // Header for semaphores.
+#include <unistd.h>    // Header for sleep function.
+using namespace std;
+// Declare semaphores and mutex
+sem_t wrt; // Semaphore to control access to the shared resource for writers.
+pthread_mutex_t mutex; // Mutex to ensure mutual exclusion for updating `read_count`.
+int read_count = 0; // Keeps track of the number of active readers.
+int value = 0;      // The shared resource to be read and written by threads.
+void *writer(void *arg) {
+    while (true) {
+        sem_wait(&wrt); // Wait (lock) the semaphore to get exclusive access to the shared resource.
+        // Critical section: writer updates the shared resource.
+        value++;
+        cout << "Writer wrote value: " << value << endl;
+        sem_post(&wrt); // Signal (unlock) the semaphore, allowing others to access the resource.
+        sleep(1); // Pause for a moment to simulate real-time processing.
+    }    return NULL;}
+void *reader(void *arg) {
+    while (true) {
+        // Lock the mutex to safely update `read_count`.
+        pthread_mutex_lock(&mutex); 
+        read_count++; // Increment the count of active readers.
+        // If this is the first reader, lock the writer semaphore to block writers.
+        if (read_count == 1) {
+            sem_wait(&wrt);}
+        pthread_mutex_unlock(&mutex); // Unlock the mutex after updating `read_count`.
+        // Critical section: reader reads the shared resource.
+        cout << "Reader read value: " << value << endl;
+        // Lock the mutex to safely update `read_count` again.
+        pthread_mutex_lock(&mutex);
+        read_count--; // Decrement the count of active readers.
+        // If there are no readers left, unlock the writer semaphore.
+        if (read_count == 0) {
+            sem_post(&wrt);}
+        pthread_mutex_unlock(&mutex); // Unlock the mutex after updating `read_count`.
+        sleep(1); // Pause for a moment to simulate real-time processing.
+    }    return NULL;}
+int main() {
+    pthread_t readers[3], writers[3]; // Create arrays of threads for readers and writers.
+    // Initialize the semaphore and mutex
+    sem_init(&wrt, 0, 1); // Initialize writer semaphore to 1, allowing one writer or multiple readers.
+    pthread_mutex_init(&mutex, NULL); // Initialize the mutex for reader count management.
+    // Create writer threads
+    for (int i = 0; i < 3; i++) {
+        pthread_create(&writers[i], NULL, writer, NULL);
+    }    // Create reader threads
+    for (int i = 0; i < 3; i++) {
+        pthread_create(&readers[i], NULL, reader, NULL);}
+    // Wait for all threads to complete execution (infinite loop means this won't end naturally).
+    for (int i = 0; i < 3; i++) {
+        pthread_join(writers[i], NULL);
+        pthread_join(readers[i], NULL);}
+    // Destroy the semaphore and mutex after all threads are done.
+    sem_destroy(&wrt); // Clean up the writer semaphore.
+    pthread_mutex_destroy(&mutex); // Clean up the mutex.
+    return 0; // Exit the program.}
+// sudo apt install g++
+// g++ Reader_Writer.cpp
+// ./a.out
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+FCFS
+
+#include<bits/stdc++.h>
+using namespace std;
+int main(){
+    int n;    cout<<"Enter no. of processes"<<endl;
+    cin>>n;    vector<int> at(n),bt(n),ct(n),tat(n),wt(n);
+    for(int i=0; i<n; i++){
+        cout << "Enter arrival time and burst time (Space separated) of process "<<i+1<<" : "<<endl;
+        cin>>at[i]>>bt[i];}
+    int currentTime = 0;
+    for(int i=0; i<n; i++){
+        if(currentTime < at[i]) currentTime = at[i];
+        ct[i] = currentTime + bt[i];
+        currentTime = ct[i];
+        tat[i] = ct[i] - at[i];
+        wt[i] = tat[i] - bt[i];}
+    cout<<"Answer: "<<endl;
+    cout<<"AT BT CT TAT WT"<<endl;
+    for(int i=0; i<n; i++){
+        cout<<at[i]<<"  "<<bt[i]<<"  "<<ct[i]<<"  "<<tat[i]<<"  "<<wt[i]<<endl;}}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SJF PRE-EMPTIVE
+
+// SJF Preemptive
+#include <iostream>
+#include <vector>
+#include <climits>
+using namespace std;
+int main() {int n;
+    cout << "Enter the number of processes: ";cin >> n;
+    vector<int> at(n), bt(n), remaining_bt(n), ct(n), tat(n), wt(n);
+    cout << "Enter Arrival Time and Burst Time for each process:\n";
+    for (int i = 0; i < n; i++) {
+        cin >> at[i] >> bt[i];
+        remaining_bt[i] = bt[i];}
+    int completed = 0, currentTime = 0, minIndex = -1, minTime = INT_MAX;
+    while (completed != n) {
+        minIndex = -1;
+        minTime = INT_MAX;
+        for (int i = 0; i < n; i++) {
+            if (at[i] <= currentTime && remaining_bt[i] > 0 && remaining_bt[i] < minTime) {
+                minTime = remaining_bt[i];
+                minIndex = i;}}
+        if (minIndex == -1) {
+            currentTime++;
+            continue;        }
+        remaining_bt[minIndex]--;
+        currentTime++;
+        if (remaining_bt[minIndex] == 0) {
+            completed++;
+            ct[minIndex] = currentTime;
+            tat[minIndex] = ct[minIndex] - at[minIndex];
+            wt[minIndex] = tat[minIndex] - bt[minIndex];     }   }
+    cout << "\nP\tAT\tBT\tCT\tTAT\tWT\n";
+    for (int i = 0; i < n; i++) {
+        cout << "P" << i + 1 << "\t" << at[i] << "\t" << bt[i] << "\t" << ct[i]
+             << "\t" << tat[i] << "\t" << wt[i] << "\n";    }    return 0;}
+/* Enter the no. of processes : 3
+Enter arrival time and burst time for each process :
+1 3
+1 5
+2 1*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+SJF NON-PRE-EMPTIVE
+
+#include<bits/stdc++.h>
+using namespace std;
+struct Process{
+    int id,at,bt,ct,tat,wt;};
+int main(){
+    int n;
+    cout << "Enter number of processess: ";
+    cin >> n;
+    cout<<endl;
+    vector<Process> processes(n);
+    cout << "Enter Arrival Time and Burst Time for each process:"<<endl;
+    for(int i=0; i<n; i++){
+        processes[i].id = i+1;
+        cin>>processes[i].at>>processes[i].bt;}
+    sort(processes.begin(), processes.end(), [](Process a, Process b) { return a.at < b.at; });
+    int currentTime = 0;
+    for(int i=0; i<n; i++){
+        auto it = min_element(processes.begin() + i, processes.end(), [&] (Process a, Process b) {return a.bt < b.bt && a.at < currentTime;});
+        if(currentTime < it->at) currentTime = it->at;
+        swap(processes[i],*it);
+        processes[i].ct = currentTime + processes[i].bt;
+        currentTime = processes[i].ct;
+        processes[i].tat = processes[i].ct - processes[i].at;
+        processes[i].wt = processes[i].tat - processes[i].bt;}
+    cout << "\nP\tAT\tBT\tCT\tTAT\tWT\n";
+    for (auto p : processes) {
+        cout << "P" << p.id << "\t" << p.at << "\t" << p.bt << "\t" << p.ct
+             << "\t" << p.tat << "\t" << p.wt << "\n";}return 0;}
+ Enter the no. of processes : 3
+Enter arrival time and burst time for each process :
+1 3
+1 5
+2 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PRIORITY PREMPTIVE
+
+// priority pre-emptive 
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+struct Process {
+    int pid;       // Process ID
+    int at;        // Arrival Time
+    int bt;        // Burst Time
+    int priority;  // Priority (higher value means higher priority)
+    int remaining_bt; // Remaining Burst Time
+    int ct;        // Completion Time
+    int tat;       // Turnaround Time
+    int wt;        // Waiting Time};
+void findAvgTime(vector<Process> &processes, int n) {
+    int currentTime = 0;
+    int completed = 0;
+    int maxPriorityIndex;
+    bool found;
+    float totalWT = 0, totalTAT = 0;
+    while (completed != n) {
+        maxPriorityIndex = -1;
+        found = false;
+        // Find the process with the highest priority (highest priority value)
+        for (int i = 0; i < n; i++) {
+            if (processes[i].at <= currentTime && processes[i].remaining_bt > 0) {
+                if (maxPriorityIndex == -1 || processes[i].priority > processes[maxPriorityIndex].priority) {
+                    maxPriorityIndex = i;
+                    found = true;}}}
+        // If no process is found, increment the current time
+        if (!found) {currentTime++; continue;}
+        //Execute the selected process for one unit of time
+        processes[maxPriorityIndex].remaining_bt--;
+        currentTime++;
+        // If the process is completed
+        if (processes[maxPriorityIndex].remaining_bt == 0) {
+            completed++;
+            processes[maxPriorityIndex].ct = currentTime;
+            processes[maxPriorityIndex].tat = processes[maxPriorityIndex].ct - processes[maxPriorityIndex].at;
+            processes[maxPriorityIndex].wt = processes[maxPriorityIndex].tat - processes[maxPriorityIndex].bt;
+            totalWT += processes[maxPriorityIndex].wt;
+            totalTAT += processes[maxPriorityIndex].tat;} }
+    cout << "\nP\tAT\tBT\tPriority\tCT\tTAT\tWT\n";
+    for (int i = 0; i < n; i++) {
+        cout << "P" << processes[i].pid << "\t" << processes[i].at << "\t" << processes[i].bt << "\t"
+             << processes[i].priority << "\t\t" << processes[i].ct << "\t" << processes[i].tat << "\t"
+             << processes[i].wt << "\n";    }
+    cout << "\nAverage Waiting Time: " << (totalWT / n);
+    cout << "\nAverage Turnaround Time: " << (totalTAT / n) << endl;}
+int main() {
+    int n;    cout << "Enter the number of processes: ";
+    cin >> n;    vector<Process> processes(n);
+    // Input process details
+    for (int i = 0; i < n; i++) {
+        processes[i].pid = i + 1;
+        cout << "Enter Arrival Time, Burst Time, and Priority for Process " << processes[i].pid << ": ";
+        cin >> processes[i].at >> processes[i].bt >> processes[i].priority;
+        processes[i].remaining_bt = processes[i].bt;}    // Find average time and display process details
+    findAvgTime(processes, n); return 0;}
+/* Enter the number of processes: 3
+Enter Arrival Time, Burst Time, and Priority for Process 1: 1 3 1
+Enter Arrival Time, Burst Time, and Priority for Process 2: 2 3 2
+Enter Arrival Time, Burst Time, and Priority for Process 3: 3 1 0
+Average Waiting Time: 2.33333
+Average Turnaround Time: 4.66667*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PRIORITY NON - PRE - EMPTIVE
+
+// priority non pre-emptive
+#include <bits/stdc++.h>
+using namespace std;
+struct Process {
+    int pid;      // Process ID
+    int bt;       // CPU Burst time required
+    int priority; // Priority of this process};
+// Function to sort the Process according to priority
+bool comparison(Process a, Process b) {
+    return (a.priority > b.priority); // Higher priority value means higher priority}
+// Function to find the waiting time for all processes
+void findWaitingTime(Process proc[], int n, int wt[]) {
+    wt[0] = 0; // Waiting time for first process is 0
+    // Calculating waiting time for each process
+    for (int i = 1; i < n; i++) {
+        wt[i] = proc[i - 1].bt + wt[i - 1];}}
+// Function to calculate turnaround time
+void findTurnAroundTime(Process proc[], int n, int wt[], int tat[]) {
+    // Calculating turnaround time by adding burst time and waiting time
+    for (int i = 0; i < n; i++) {
+        tat[i] = proc[i].bt + wt[i];}
+}// Function to calculate average waiting time and turnaround time
+void findavgTime(Process proc[], int n) {
+    int wt[n], tat[n], total_wt = 0, total_tat = 0;
+    // Find waiting time for all processes
+    findWaitingTime(proc, n, wt);
+    // Find turnaround time for all processes
+    findTurnAroundTime(proc, n, wt, tat);
+    // Display processes along with all details
+    cout << "\nProcesses "
+         << " Burst time "
+         << " Waiting time "
+         << " Turnaround time\n";
+    // Calculate total waiting time and total turnaround time
+    for (int i = 0; i < n; i++) {
+        total_wt += wt[i];
+        total_tat += tat[i];
+        cout << " " << proc[i].pid << "\t\t" << proc[i].bt
+             << "\t " << wt[i] << "\t\t " << tat[i] << endl;}
+    cout << "\nAverage waiting time = " << (float)total_wt / n;
+    cout << "\nAverage turnaround time = " << (float)total_tat / n << endl;}
+void priorityScheduling(Process proc[], int n) {
+    // Sort processes by priority
+    sort(proc, proc + n, comparison);
+    cout << "\nOrder in which processes get executed: ";
+    for (int i = 0; i < n; i++) {
+        cout << proc[i].pid << " ";    }
+    cout << endl;
+    findavgTime(proc, n);}
+// Main function
+int main() {
+    int n;
+    // Take user input for the number of processes
+    cout << "Enter the number of processes: ";
+    cin >> n;
+    // Create an array of processes
+    Process proc[n];
+    // Take user input for each process's burst time and priority
+    for (int i = 0; i < n; i++) {
+        cout << "\nEnter burst time and priority for process " << i + 1 << ":\n";
+        proc[i].pid = i + 1;
+        cout << "Burst time: ";
+        cin >> proc[i].bt;
+        cout << "Priority (higher number means higher priority): ";
+        cin >> proc[i].priority;
+    }
+    // Perform Priority Scheduling
+    priorityScheduling(proc, n);
+    return 0;}
+/*Enter the number of processes: 2
+Enter burst time and priority for process 1:
+Burst time: 3
+Priority (higher number means higher priority): 2
+Enter burst time and priority for process 2:
+Burst time: 1
+Priority (higher number means higher priority): 1
+Order in which processes get executed: 1 2 
+Average waiting time = 1.5
+Average turnaround time = 3.5*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ROUND ROBIN
+
+// roundrobin
+#include <iostream>
+#include <vector>
+#include <queue>
+using namespace std;
+int main() {
+    int n, timeQuantum;
+    cout << "Enter the number of processes: ";
+    cin >> n;
+    vector<int> at(n), bt(n), remaining_bt(n), ct(n), tat(n), wt(n);
+    cout << "Enter Arrival Time and Burst Time for each process:\n";
+    for (int i = 0; i < n; i++) {
+        cin >> at[i] >> bt[i];
+        remaining_bt[i] = bt[i];    }
+    cout << "Enter Time Quantum: ";
+    cin >> timeQuantum;
+    int currentTime = 0, completed = 0;
+    queue<int> readyQueue;
+    vector<bool> inQueue(n, false);
+    // Add processes that arrive at time 0
+    for (int i = 0; i < n; i++) {
+        if (at[i] == 0) {
+            readyQueue.push(i);
+            inQueue[i] = true;}}
+    while (completed < n) {
+        // If the ready queue is empty, jump to the next process arrival time
+        if (readyQueue.empty()) {
+            for (int i = 0; i < n; i++) {
+                if (remaining_bt[i] > 0) {
+                    currentTime = at[i];
+                    readyQueue.push(i);
+                    inQueue[i] = true;
+                    break;}}}
+        int index = readyQueue.front();
+        readyQueue.pop();
+        inQueue[index] = false;
+        // Execute the process for the time quantum or the remaining burst time
+        int executionTime = min(timeQuantum, remaining_bt[index]);
+        currentTime += executionTime;
+        remaining_bt[index] -= executionTime;
+        // Check for new arrivals during execution
+        for (int i = 0; i < n; i++) {
+            if (i != index && remaining_bt[i] > 0 && at[i] <= currentTime && !inQueue[i]) {
+                readyQueue.push(i);
+                inQueue[i] = true;}}
+        // If the process is not yet completed, push it back into the queue
+        if (remaining_bt[index] > 0) {
+            readyQueue.push(index);
+            inQueue[index] = true;} else {
+            completed++;
+            ct[index] = currentTime;
+            tat[index] = ct[index] - at[index];
+            wt[index] = tat[index] - bt[index];} }
+    cout << "\nP\tAT\tBT\tCT\tTAT\tWT\n";
+    for (int i = 0; i < n; i++) {
+        cout << "P" << i + 1 << "\t" << at[i] << "\t" << bt[i] << "\t" << ct[i]
+             << "\t" << tat[i] << "\t" << wt[i] << "\n";}return 0;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BANKERS
+
+// Bankers algo
+#include <stdio.h>
+#include <stdbool.h>
+#define MAX_PROCESSES 5
+#define MAX_RESOURCES 3
+// Function to check if the system is in a safe state
+bool isSafeState(int processes[], int avail[], int max[][MAX_RESOURCES], int alloc[][MAX_RESOURCES], int need[][MAX_RESOURCES], int num_processes, int num_resources) {
+    bool finish[MAX_PROCESSES] = {false};
+    int safeSequence[MAX_PROCESSES];
+    int work[MAX_RESOURCES];
+    // Initialize work as available resources
+    for (int i = 0; i < num_resources; i++) {
+        work[i] = avail[i];}
+    int count = 0;
+    // Find the processes that can finish
+    while (count < num_processes) {
+        bool found = false;
+        for (int p = 0; p < num_processes; p++) {
+            if (!finish[p]) {
+                int j;
+                for (j = 0; j < num_resources; j++) {
+                    if (need[p][j] > work[j])
+                        break;                }
+                // If all resources for process p can be allocated
+                if (j == num_resources) {
+                    // Process p can finish
+                    for (int k = 0; k < num_resources; k++) {
+                        work[k] += alloc[p][k];}
+                    safeSequence[count++] = p;
+                    finish[p] = true;
+                    found = true;}}  }
+        // If no process could be found in this iteration, system is not in a safe state
+        if (!found) {
+            return false;}}
+    // If all processes can finish, system is in a safe state
+    printf("System is in a safe state.\nSafe Sequence: ");
+    for (int i = 0; i < num_processes; i++) {
+        printf("%d ", safeSequence[i]);}printf("\n");
+    return true;}
+// Function to calculate the need matrix
+void calculateNeed(int need[][MAX_RESOURCES], int max[][MAX_RESOURCES], int alloc[][MAX_RESOURCES], int num_processes, int num_resources) {
+    for (int i = 0; i < num_processes; i++) {
+        for (int j = 0; j < num_resources; j++) {
+            need[i][j] = max[i][j] - alloc[i][j];}}}
+int main() {
+    int num_processes, num_resources;
+    printf("Enter the number of processes: ");
+    scanf("%d", &num_processes);
+    printf("Enter the number of resources: ");
+    scanf("%d", &num_resources);
+    int processes[MAX_PROCESSES], avail[MAX_RESOURCES], max[MAX_PROCESSES][MAX_RESOURCES], alloc[MAX_PROCESSES][MAX_RESOURCES], need[MAX_PROCESSES][MAX_RESOURCES];
+    // Input the available resources
+    printf("Enter the available resources: \n");
+    for (int i = 0; i < num_resources; i++) {
+        scanf("%d", &avail[i]);}
+    // Input the maximum demand of each process
+    printf("Enter the maximum demand of each process: \n");
+    for (int i = 0; i < num_processes; i++) {
+        for (int j = 0; j < num_resources; j++) {
+            scanf("%d", &max[i][j]);
+        }    }// Input the allocated resources for each process
+    printf("Enter the allocated resources for each process: \n");
+    for (int i = 0; i < num_processes; i++) {
+        for (int j = 0; j < num_resources; j++) {
+            scanf("%d", &alloc[i][j]); }    }
+    // Calculate the need matrix
+    calculateNeed(need, max, alloc, num_processes, num_resources);
+    if (!isSafeState(processes, avail, max, alloc, need, num_processes, num_resources)) {
+        printf("System is not in a safe state.\n");
+    }    return 0;}
+Enter the number of processes: 5
+Enter the number of resources: 3
+Enter the available resources: 
+3 3 2
+Enter the maximum demand of each process: 
+7 5 3
+3 2 2
+9 0 2
+2 2 2
+4 3 3 
+Enter the allocated resources for each process: 
+0 1 0
+2 0 0
+3 0 2
+2 1 1
+0 0 2
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PAGE FAULT
+
+#include<bits/stdc++.h>
+using namespace std;
+#define MAX_PAGES 100
+int fifo(int pages[],int n, int frames){
+    int total_faults = 0;
+    int block[frames];
+    int found;
+    int index = 0;
+    for(int i=0; i<frames; i++){
+        block[i] = -1;}
+    int i;
+    for(i=0; i<n; i++){
+        found = 0;
+        for(int j=0; j<frames; j++){
+            if(pages[i] == block[j]){
+                found = 1;
+                break;}    }
+        if(!found){
+            block[index] = pages[i];
+            index = (index + 1)%frames;
+            total_faults++;        }    }
+    return total_faults;}
+int lru(int pages[],int n, int frames){
+    int total_faults = 0;int block[frames];
+ int lru_time[frames] = {0};
+    int found;    int lru_index; int i;
+    for(int i=0; i<frames; i++){
+        block[i] = -1;}
+    for(i=0; i<n; i++){
+        found = 0;
+        for(int j=0; j<frames; j++){
+            if(block[j] == pages[i]){
+                found = 1;
+                lru_time[j] = i;
+                break;}}if(!found){
+            lru_index = 0;
+            for(int j=1; j<frames; j++){
+                if(lru_time[j] < lru_time[lru_index]){
+                    lru_index = j;}}
+            block[lru_index] = pages[i];
+            lru_time[lru_index] = i;
+            total_faults++;}}
+    return total_faults;}
+int optimal(int pages[], int n, int frames){
+    int total_faults = 0; int found;
+    int block[frames]; int index_to_replace;
+    int farthest;int i,j,k;
+    for(int i=0; i<frames; i++){
+        block[i] = -1; }
+    for(i=0; i<n; i++){
+        found = 0;
+        for(int j=0; j<frames; j++){
+            if(block[j] == pages[i]){
+                found = 1;
+                break;}}
+        if(!found){
+            farthest = -1;
+            index_to_replace = -1;
+            for(j=0;j<frames; j++){ //j=>block frames
+                for(k=i+1; k<n; k++){  //i=>pages n
+                    if(block[j] == pages[k]){
+                        if(k > farthest){
+                            farthest = k;
+                            index_to_replace = j;}break;}}
+                if(k == n){  //page never used in future
+                    index_to_replace = j;
+                    break;}}
+            block[index_to_replace] = pages[i];
+            total_faults++;}    }
+    return total_faults;}
+int main(){
+    int pages[MAX_PAGES];
+    int n,frames;
+    cout<<"Enter number of pages: ";
+    cin>>n;
+    cout<<"Enter number of frames: ";
+    cin>>frames;
+    cout<<"Enter all the pages (Space separated): ";
+    for(int i=0; i<n; i++){
+    cin>>pages[i];}   
+ int fifo_faults = fifo(pages,n,frames);
+    cout<<"Total Fifo faults: "<<fifo_faults<<endl;
+    int lru_faults = lru(pages,n,frames);
+    cout<<"Total LRU faults: "<<lru_faults<<endl;
+    int optimal_faults = optimal(pages,n,frames);
+    cout<<"Total LRU faults: "<<optimal_faults<<endl;
+    return 0;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DISK
+
+#include<bits/stdc++.h>
+using namespace std;
+#define MAX 100
+void sstf(int request[], int n, int head){
+    cout<<"SSTF: ";
+    bool processed[MAX] = {false};
+    int current_head = head;
+    for(int j=0; j<n; j++){
+        int min_dist = INT_MAX;
+        int next_index = -1;
+        for(int i=0; i<n; i++){
+            if(!processed[i]){
+                int dist = abs(current_head-request[i]);
+                if(dist < min_dist){
+                    min_dist = dist;
+                    next_index = i;}}}
+        if(next_index == -1){
+            break;}
+        processed[next_index] = true;
+        current_head = request[next_index];
+        cout << current_head<<" ";}
+    cout<<endl;}
+void scan(int request[], int n, int head, int disk_size){
+    cout<<"SCAN: ";
+    vector<int> request_sorted(n+1); //to include head
+    request_sorted[0] = head;
+    for(int i=0; i<n; i++){
+        request_sorted[i+1] = request[i];}
+    n++;
+    sort(request_sorted.begin(), request_sorted.end());
+    int posi_head=-1;
+    for(int i=0; i<n; i++){
+        if(request_sorted[i] == head){
+            posi_head = i;
+            break;}}
+    for(int i=posi_head; i<n; i++){
+        cout<<request_sorted[i]<<" ";}
+    cout<<disk_size-1<<" ";
+    for(int i=posi_head-1; i>=0; i--){
+        cout<<request_sorted[i]<<" ";   }
+    cout<<endl;
+}
+void clook(int request[], int n, int head){
+    vector<int> request_sorted(n);
+    for(int i=0; i<n; i++){
+        request_sorted[i] = request[i];
+    }    sort(request_sorted.begin(), request_sorted.end());
+    int posi_head = -1;
+    for(int i=0; i<n; i++){ //to find first req greater than head
+        if(request_sorted[i] >= head){
+            posi_head = i;
+            break;}}
+    cout<<"C-LOOK: ";
+    for(int i=posi_head; i<n; i++){
+        cout<<request_sorted[i]<<" ";}
+    for(int i=posi_head-1; i>=0; i--){
+        cout<<request_sorted[i]<<" ";}
+    cout<<endl;}
+int main(){
+    int n,disk_size,head;
+    cout<<"Enter number of requests: ";
+    cin >> n;
+    cout<<"\nEnter disk size: ";
+    cin >> disk_size;
+    cout<<"\n Enter initial head position: ";
+    cin >> head;
+    int request[MAX];
+    cout<<"Enter "<<n<<" requests: (Space separated): "<<endl;
+    for(int i=0; i<n; i++){
+        cin>>request[i];}
+    sstf(request,n,head);
+    scan(request,n,head,disk_size);
+    clook(request,n,head);
+    return 0;
+}
